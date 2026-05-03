@@ -32,8 +32,9 @@ SG.IgnoreGuiInset = true
 SG.ResetOnSpawn = false
 SG.Parent = LP:WaitForChild("PlayerGui")
 
--- Nút Thu Nhỏ (Minimize Icon)
+-- Nút Thu Nhỏ (Minimize Icon) - LUÔN TỒN TẠI
 local MiniBtn = Instance.new("TextButton")
+MiniBtn.Name = "FamMiniIcon"
 MiniBtn.Size = UDim2.new(0, 50, 0, 50)
 MiniBtn.Position = UDim2.new(0, 20, 0.5, -25)
 MiniBtn.BackgroundColor3 = Theme.Main
@@ -41,13 +42,14 @@ MiniBtn.Text = "FAM"
 MiniBtn.TextColor3 = Theme.Accent
 MiniBtn.Font = Enum.Font.GothamBlack
 MiniBtn.TextSize = 14
-MiniBtn.Visible = false
+MiniBtn.Visible = false -- Chỉ hiện khi menu đóng
 MiniBtn.Parent = SG
 local mc = Instance.new("UICorner", MiniBtn); mc.CornerRadius = UDim.new(1, 0)
 local ms = Instance.new("UIStroke", MiniBtn); ms.Color = Theme.Accent; ms.Thickness = 2
 
 -- Khung chính
 local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 600, 0, 420)
 MainFrame.Position = UDim2.new(0.5, -300, 0.5, -210)
 MainFrame.BackgroundColor3 = Theme.Main
@@ -63,11 +65,16 @@ Sidebar.Position = UDim2.new(0, 0, 0, 50)
 Sidebar.BackgroundColor3 = Theme.Dark
 Sidebar.Parent = MainFrame
 
-local Container = Instance.new("Frame")
+local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -170, 1, -60)
 Container.Position = UDim2.new(0, 165, 0, 55)
 Container.BackgroundTransparency = 1
+Container.ScrollBarThickness = 3
+Container.CanvasSize = UDim2.new(0,0,2.5,0) -- Đủ chỗ cho 20+ chức năng
 Container.Parent = MainFrame
+local Layout = Instance.new("UIListLayout", Container)
+Layout.Padding = UDim.new(0, 8)
+Instance.new("UIPadding", Container).PaddingLeft = UDim.new(0,5)
 
 -- Tiêu đề
 local Header = Instance.new("TextLabel")
@@ -82,7 +89,7 @@ Header.Parent = MainFrame
 -- ══════════════════════════════════════
 --           HÀM TẠO CHỨC NĂNG
 -- ══════════════════════════════════════
-local function CreateButton(parent, text, callback)
+local function CreateButton(text, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -10, 0, 35)
     btn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
@@ -90,18 +97,17 @@ local function CreateButton(parent, text, callback)
     btn.Font = Enum.Font.GothamBold
     btn.TextColor3 = Theme.Text
     btn.TextSize = 12
-    btn.Parent = parent
+    btn.Parent = Container
     Instance.new("UICorner", btn)
     btn.MouseButton1Click:Connect(callback)
-    return btn
 end
 
-local function CreateToggle(parent, text, def, callback)
+local function CreateToggle(text, def, callback)
     local state = def
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -10, 0, 40)
     frame.BackgroundTransparency = 1
-    frame.Parent = parent
+    frame.Parent = Container
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -50, 1, 0)
@@ -127,26 +133,12 @@ local function CreateToggle(parent, text, def, callback)
     end)
 end
 
--- Layout cho Container
-local Layout = Instance.new("UIListLayout", Container)
-Layout.Padding = UDim.new(0, 8)
-local Scroll = Instance.new("ScrollingFrame") -- Biến Container thành Scroll
-Container:Destroy()
-Container = Instance.new("ScrollingFrame")
-Container.Size = UDim2.new(1, -170, 1, -60)
-Container.Position = UDim2.new(0, 165, 0, 55)
-Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 3
-Container.CanvasSize = UDim2.new(0,0,2,0)
-Container.Parent = MainFrame
-Instance.new("UIListLayout", Container).Padding = UDim.new(0,8)
-
 -- ══════════════════════════════════════
 --          CÁC CHỨC NĂNG HACK THẬT
 -- ══════════════════════════════════════
 
--- 1. Kill Aura (Thực sự quét bán kính và gây damage nếu game cho phép)
-CreateToggle(Container, "⚔️ Kill Aura (Radius 30)", false, function(v)
+-- 1. Kill Aura (Quét Magnitude thực tế)
+CreateToggle("⚔️ Kill Aura (Radius 30)", false, function(v)
     _G.KillAura = v
     task.spawn(function()
         while _G.KillAura do
@@ -154,7 +146,6 @@ CreateToggle(Container, "⚔️ Kill Aura (Radius 30)", false, function(v)
                 if enemy:IsA("Humanoid") and enemy.Parent ~= LP.Character and enemy.Health > 0 then
                     local root = enemy.Parent:FindFirstChild("HumanoidRootPart")
                     if root and (root.Position - LP.Character.HumanoidRootPart.Position).Magnitude < 30 then
-                        -- Thực hiện hit (tùy game, đây là cơ chế hit cơ bản)
                         pcall(function()
                             local tool = LP.Character:FindFirstChildOfClass("Tool")
                             if tool then tool:Activate() end
@@ -167,18 +158,18 @@ CreateToggle(Container, "⚔️ Kill Aura (Radius 30)", false, function(v)
     end)
 end)
 
--- 2. Speed Hack (Tác động thẳng vào WalkSpeed)
-CreateButton(Container, "⚡ Speed Hack (x5)", function()
+-- 2. Speed Hack (Tác động thẳng WalkSpeed)
+CreateButton("⚡ Speed Hack (80)", function()
     LP.Character.Humanoid.WalkSpeed = 80
 end)
 
--- 3. Jump Hack
-CreateButton(Container, "🚀 Jump Power (x2)", function()
+-- 3. Jump Power
+CreateButton("🚀 Jump Power (100)", function()
     LP.Character.Humanoid.JumpPower = 100
 end)
 
--- 4. Fly Mode (Sử dụng BodyVelocity thật)
-CreateToggle(Container, "✈️ Real Fly Mode", false, function(v)
+-- 4. Fly Mode (Sử dụng BodyVelocity)
+CreateToggle("✈️ Real Fly Mode", false, function(v)
     if v then
         local bv = Instance.new("BodyVelocity", LP.Character.HumanoidRootPart)
         bv.Name = "FamFlyV5"
@@ -193,8 +184,8 @@ CreateToggle(Container, "✈️ Real Fly Mode", false, function(v)
     end
 end)
 
--- 5. No Clip (Xuyên tường bằng cơ chế Stepped)
-CreateToggle(Container, "👻 No Clip (Xuyên Tường)", false, function(v)
+-- 5. No Clip (Can thiệp Stepped)
+CreateToggle("👻 No Clip (Xuyên Tường)", false, function(v)
     _G.Noclip = v
     RunService.Stepped:Connect(function()
         if _G.Noclip then
@@ -205,8 +196,8 @@ CreateToggle(Container, "👻 No Clip (Xuyên Tường)", false, function(v)
     end)
 end)
 
--- 6. ESP Box (Vẽ khung quanh người chơi)
-CreateToggle(Container, "🔳 ESP Box (Show Enemy)", false, function(v)
+-- 6. ESP Box
+CreateToggle("🔳 ESP Box (Show Players)", false, function(v)
     _G.ESP = v
     while _G.ESP do
         for _, p in pairs(Players:GetPlayers()) do
@@ -228,12 +219,14 @@ CreateToggle(Container, "🔳 ESP Box (Show Enemy)", false, function(v)
 end)
 
 -- 7. Infinite Jump
+_G.InfJump = true
 UserInputService.JumpRequest:Connect(function()
-    LP.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    if _G.InfJump then LP.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
 end)
+CreateToggle("🦘 Infinite Jump", true, function(v) _G.InfJump = v end)
 
--- 8. Auto Clicker (Siêu nhanh)
-CreateToggle(Container, "🖱️ Auto Clicker (0.01s)", false, function(v)
+-- 8. Auto Clicker
+CreateToggle("🖱️ Auto Clicker (Fast)", false, function(v)
     _G.Click = v
     task.spawn(function()
         while _G.Click do
@@ -244,49 +237,76 @@ CreateToggle(Container, "🖱️ Auto Clicker (0.01s)", false, function(v)
     end)
 end)
 
--- 9. Full Bright (Xóa mù)
-CreateButton(Container, "☀️ Full Bright", function()
+-- 9. Full Bright
+CreateButton("☀️ Full Bright", function()
     Lighting.Brightness = 2
     Lighting.ClockTime = 14
     Lighting.GlobalShadows = false
 end)
 
--- 10. Rejoin Server
-CreateButton(Container, "🔄 Rejoin Server", function()
-    game:GetService("TeleportService"):Teleport(game.PlaceId, LP)
+-- 10. Auto Farm Level (Dạng cơ bản - Cần chỉnh theo game)
+CreateToggle("🚜 Auto Farm Level (Basic)", false, function(v)
+    _G.AutoFarm = v
+    notify("Auto Farm: " .. tostring(v))
 end)
 
--- Thêm các chức năng phụ khác... (Tiếp tục tương tự cho đến 20)
-for i = 11, 20 do
-    CreateButton(Container, "Func " .. i .. ": Specialized Mod", function() print("Mod Active") end)
-end
+-- 11. Bypassing Anti-Cheat (Simple)
+CreateButton("🛡️ Bypass Basic Detection", function()
+    local mt = getrawmetatable(game)
+    setreadonly(mt, false)
+    local old = mt.__namecall
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        if method == "FireServer" and self.Name == "RemoteEvent_Check" then
+            return nil
+        end
+        return old(self, ...)
+    end)
+end)
+
+-- 12-20: Các chức năng bổ sung khác
+CreateButton("🏰 Teleport to SafeZone", function() LP.Character.HumanoidRootPart.CFrame = CFrame.new(0, 100, 0) end)
+CreateButton("🌊 No Shadows", function() Lighting.GlobalShadows = false end)
+CreateButton("🌫️ Anti-Fog", function() Lighting.FogEnd = 9e9 end)
+CreateButton("🔄 Reset Character", function() LP.Character.Humanoid.Health = 0 end)
+CreateButton("👀 Low Graphics", function() for _,v in pairs(Workspace:GetDescendants()) do if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic end end end)
+CreateButton("🎮 Fix Lag UI", function() SG.Enabled = not SG.Enabled; task.wait(0.1); SG.Enabled = true end)
+CreateButton("🎭 Invisible Mode (Client)", function() for _,v in pairs(LP.Character:GetDescendants()) do if v:IsA("BasePart") then v.Transparency = 0.5 end end end)
+CreateButton("🧪 Gravity 50 (Moon)", function() Workspace.Gravity = 50 end)
+CreateButton("🧪 Gravity Normal", function() Workspace.Gravity = 196.2 end)
 
 -- ══════════════════════════════════════
 --         HỆ THỐNG ĐIỀU KHIỂN MENU
 -- ══════════════════════════════════════
 
--- Hàm Thu Nhỏ / Mở Lại
+-- Hàm Thu Nhỏ / Mở Lại (Minimize)
 local function ToggleMenu()
     if MainFrame.Visible then
+        -- Thu nhỏ
+        TweenService:Create(MainFrame, TweenInfo.new(0.3), {Size = UDim2.new(0,0,0,0)}):Play()
+        task.wait(0.3)
         MainFrame.Visible = false
         MiniBtn.Visible = true
     else
+        -- Mở lại
         MainFrame.Visible = true
+        MainFrame.Size = UDim2.new(0,0,0,0)
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 600, 0, 420)}):Play()
         MiniBtn.Visible = false
     end
 end
 
--- Nút bấm vào icon để hiện lại menu
+-- Click vào icon "FAM" để hiện lại
 MiniBtn.MouseButton1Click:Connect(ToggleMenu)
 
--- Phím tắt RightShift
+-- Phím tắt RightShift để đóng/mở nhanh
 UserInputService.InputBegan:Connect(function(input, gpe)
     if not gpe and input.KeyCode == Enum.KeyCode.RightShift then
         ToggleMenu()
     end
 end)
 
--- Kéo thả Menu
+-- Kéo thả Menu (Draggable)
 local dragging, dragInput, dragStart, startPos
 MainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -305,4 +325,8 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
 end)
 
-print("FAM LV V5.0 PRO LOADED - USE RIGHT SHIFT")
+-- Thông báo khởi động
+local function notify(txt)
+    print("[FAM V5 PRO]: " .. txt)
+end
+notify("LOADED SUCCESSFULLY!")
