@@ -1,1274 +1,871 @@
-╔══════════════════════════════════════════════════════════════════════╗
--- ║           FAM LV MENU - TIẾNG VIỆT EDITION v3.0                     ║
--- ║              10 CHỨC NĂNG VIP | HACK THẬT 100%                      ║
--- ║        Nhấn [RightShift] để ẩn / hiện | [Delete] để đóng           ║
--- ╚══════════════════════════════════════════════════════════════════════╝
+-- ╔══════════════════════════════════════════════════════╗
+-- ║          FAM LV MENU - Script by FamLV Code          ║
+-- ║              Giao Diện Đẹp - Version 1.0             ║
+-- ╚══════════════════════════════════════════════════════╝
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
-local TeleportService = game:GetService("TeleportService")
-local VirtualUser = game:GetService("VirtualUser")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
 
-local LP = Players.LocalPlayer
-local Char = LP.Character or LP.CharacterAdded:Wait()
-local Humanoid = Char:WaitForChild("Humanoid")
-local HRP = Char:WaitForChild("HumanoidRootPart")
-local Gui = LP:WaitForChild("PlayerGui")
-
--- ═══════════════════════════════════════════════════════════════════════
---                         MÀU SẮC & THEME
--- ═══════════════════════════════════════════════════════════════════════
-local C = {
-    BG = Color3.fromRGB(6, 6, 12),
-    Surface = Color3.fromRGB(12, 11, 22),
-    Card = Color3.fromRGB(18, 16, 32),
-    Accent = Color3.fromRGB(255, 185, 0),
-    AccentD = Color3.fromRGB(220, 140, 0),
-    Green = Color3.fromRGB(0, 255, 130),
-    Red = Color3.fromRGB(255, 60, 80),
-    Blue = Color3.fromRGB(80, 160, 255),
-    Purple = Color3.fromRGB(180, 100, 255),
-    TxtW = Color3.fromRGB(240, 238, 255),
-    TxtG = Color3.fromRGB(140, 135, 170),
-    Border = Color3.fromRGB(55, 48, 90),
-    ON = Color3.fromRGB(0, 255, 130),
-    OFF = Color3.fromRGB(45, 40, 70),
-    Dark = Color3.fromRGB(8, 7, 15),
+-- ══════════════════════════════════════
+--          CẤU HÌNH CHÍNH
+-- ══════════════════════════════════════
+local CONFIG = {
+    Title = "FAM LV MENU",
+    SubTitle = "Script Hub v1.0",
+    AccentColor = Color3.fromRGB(120, 80, 255),    -- Tím neon
+    AccentColor2 = Color3.fromRGB(0, 200, 255),    -- Xanh cyan
+    BgColor = Color3.fromRGB(12, 12, 20),          -- Nền đen
+    BgColor2 = Color3.fromRGB(18, 18, 32),         -- Nền panel
+    TextColor = Color3.fromRGB(230, 230, 255),
+    SubTextColor = Color3.fromRGB(130, 130, 170),
+    ToggleOn = Color3.fromRGB(100, 60, 255),
+    ToggleOff = Color3.fromRGB(40, 40, 65),
+    GlowColor = Color3.fromRGB(120, 80, 255),
+    Font = Enum.Font.GothamBold,
+    FontLight = Enum.Font.Gotham,
 }
 
--- ═══════════════════════════════════════════════════════════════════════
---                         TIỆN ÍCH GIAO DIỆN
--- ═══════════════════════════════════════════════════════════════════════
-local function tw(obj, props, t, style, dir)
-    TweenService:Create(obj, TweenInfo.new(t or .25, style or Enum.EasingStyle.Quart, dir or Enum.EasingDirection.Out), props):Play()
+-- ══════════════════════════════════════
+--          TẠO SCREENGUI
+-- ══════════════════════════════════════
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FamLV_Menu"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999
+
+-- Gắn vào CoreGui hoặc PlayerGui
+local success = pcall(function()
+    ScreenGui.Parent = game:GetService("CoreGui")
+end)
+if not success then
+    ScreenGui.Parent = LocalPlayer.PlayerGui
 end
 
-local function corner(p, r)
+-- ══════════════════════════════════════
+--          HÀM TIỆN ÍCH
+-- ══════════════════════════════════════
+local function Tween(obj, props, time, style, dir)
+    local info = TweenInfo.new(
+        time or 0.3,
+        style or Enum.EasingStyle.Quart,
+        dir or Enum.EasingDirection.Out
+    )
+    TweenService:Create(obj, info, props):Play()
+end
+
+local function CreateCorner(parent, radius)
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, r or 10)
-    c.Parent = p
+    c.CornerRadius = UDim.new(0, radius or 8)
+    c.Parent = parent
     return c
 end
 
-local function stroke(p, col, th)
+local function CreateStroke(parent, color, thickness, transparency)
     local s = Instance.new("UIStroke")
-    s.Color = col or C.Border
-    s.Thickness = th or 1
-    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    s.Parent = p
+    s.Color = color or CONFIG.AccentColor
+    s.Thickness = thickness or 1
+    s.Transparency = transparency or 0.5
+    s.Parent = parent
     return s
 end
 
-local function grad(p, c0, c1, rot)
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new(c0, c1)
-    g.Rotation = rot or 0
-    g.Parent = p
-    return g
+local function CreateShadow(parent, color, size)
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://6014261993"
+    shadow.ImageColor3 = color or Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = 0.5
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+    shadow.Size = UDim2.new(1, size or 30, 1, size or 30)
+    shadow.Position = UDim2.new(0, -(size or 15), 0, -(size or 15))
+    shadow.ZIndex = parent.ZIndex - 1
+    shadow.Parent = parent
+    return shadow
 end
 
--- ═══════════════════════════════════════════════════════════════════════
---                         HỆ THỐNG THÔNG BÁO
--- ═══════════════════════════════════════════════════════════════════════
-local NotifQueue = {}
-local NotifActive = false
+-- ══════════════════════════════════════
+--       KHUNG CHÍNH - MAIN FRAME
+-- ══════════════════════════════════════
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 560, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -280, 0.5, -210)
+MainFrame.BackgroundColor3 = CONFIG.BgColor
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+CreateCorner(MainFrame, 14)
+CreateStroke(MainFrame, CONFIG.AccentColor, 1.5, 0.3)
+CreateShadow(MainFrame, Color3.fromRGB(80, 40, 200), 40)
 
-local function notify(msg, icon, color)
-    icon = icon or "⚡"
-    color = color or C.Accent
-    table.insert(NotifQueue, {msg = msg, icon = icon, color = color})
-    if NotifActive then return end
-    NotifActive = true
-    
-    task.spawn(function()
-        while #NotifQueue > 0 do
-            local data = table.remove(NotifQueue, 1)
-            local nf = Instance.new("ScreenGui")
-            nf.ResetOnSpawn = false
-            nf.Name = "FamNotif"
-            nf.Parent = Gui
-            
-            local box = Instance.new("Frame")
-            box.Size = UDim2.new(0, 320, 0, 52)
-            box.Position = UDim2.new(0.5, -160, 0, -70)
-            box.BackgroundColor3 = C.Card
-            box.BorderSizePixel = 0
-            box.Parent = nf
-            corner(box, 12)
-            stroke(box, color, 1.5)
-            
-            local bar = Instance.new("Frame")
-            bar.Size = UDim2.new(0, 4, 1, 0)
-            bar.BackgroundColor3 = color
-            bar.BorderSizePixel = 0
-            bar.Parent = box
-            corner(bar, 3)
-            
-            local lbl = Instance.new("TextLabel")
-            lbl.Size = UDim2.new(1, -20, 1, 0)
-            lbl.Position = UDim2.new(0, 14, 0, 0)
-            lbl.BackgroundTransparency = 1
-            lbl.Text = data.icon .. "  " .. data.msg
-            lbl.Font = Enum.Font.GothamBold
-            lbl.TextSize = 13
-            lbl.TextColor3 = C.TxtW
-            lbl.TextXAlignment = Enum.TextXAlignment.Left
-            lbl.Parent = box
-            
-            local prog = Instance.new("Frame")
-            prog.Size = UDim2.new(1, 0, 0, 2)
-            prog.Position = UDim2.new(0, 0, 1, -2)
-            prog.BackgroundColor3 = color
-            prog.BorderSizePixel = 0
-            prog.Parent = box
-            
-            tw(box, {Position = UDim2.new(0.5, -160, 0, 25)}, 0.45, Enum.EasingStyle.Back)
-            tw(prog, {Size = UDim2.new(0, 0, 0, 2)}, 2.5, Enum.EasingStyle.Linear)
-            
-            task.wait(2.5)
-            tw(box, {Position = UDim2.new(0.5, -160, 0, -80)}, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            task.wait(0.4)
-            nf:Destroy()
-        end
-        NotifActive = false
-    end)
-end
+-- Nền gradient
+local BgGrad = Instance.new("UIGradient")
+BgGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(14, 10, 28)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 16, 30)),
+})
+BgGrad.Rotation = 135
+BgGrad.Parent = MainFrame
 
--- ═══════════════════════════════════════════════════════════════════════
---                         SCREEN GUI CHÍNH
--- ═══════════════════════════════════════════════════════════════════════
-local SG = Instance.new("ScreenGui")
-SG.Name = "FamLV_VietMenu_v3"
-SG.ResetOnSpawn = false
-SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-SG.Parent = Gui
+-- ══════════════════════════════════════
+--          THANH TIÊU ĐỀ - TOPBAR
+-- ══════════════════════════════════════
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Size = UDim2.new(1, 0, 0, 52)
+TopBar.BackgroundColor3 = Color3.fromRGB(16, 12, 32)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+CreateCorner(TopBar, 14)
 
--- MAIN FRAME
-local MF = Instance.new("Frame")
-MF.Name = "Main"
-MF.Size = UDim2.new(0, 580, 0, 460)
-MF.Position = UDim2.new(0.5, -290, 0.5, -230)
-MF.BackgroundColor3 = C.BG
-MF.ClipsDescendants = true
-MF.Parent = SG
-corner(MF, 16)
-stroke(MF, C.Border, 1.5)
-grad(MF, Color3.fromRGB(10, 8, 20), Color3.fromRGB(6, 5, 12), 135)
+-- Fix góc dưới của topbar
+local TopBarFix = Instance.new("Frame")
+TopBarFix.Size = UDim2.new(1, 0, 0.5, 0)
+TopBarFix.Position = UDim2.new(0, 0, 0.5, 0)
+TopBarFix.BackgroundColor3 = Color3.fromRGB(16, 12, 32)
+TopBarFix.BorderSizePixel = 0
+TopBarFix.Parent = TopBar
 
--- Glow top
-local glowTop = Instance.new("Frame")
-glowTop.Size = UDim2.new(1, 0, 0, 2)
-glowTop.BackgroundColor3 = C.Accent
-glowTop.BorderSizePixel = 0
-glowTop.Parent = MF
-grad(glowTop, C.Accent, Color3.fromRGB(0, 0, 0), 90)
+-- Đường kẻ dưới topbar (gradient accent)
+local TopLine = Instance.new("Frame")
+TopLine.Size = UDim2.new(1, 0, 0, 2)
+TopLine.Position = UDim2.new(0, 0, 1, -2)
+TopLine.BackgroundColor3 = CONFIG.AccentColor
+TopLine.BorderSizePixel = 0
+TopLine.Parent = TopBar
+local TopLineGrad = Instance.new("UIGradient")
+TopLineGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, CONFIG.AccentColor),
+    ColorSequenceKeypoint.new(0.5, CONFIG.AccentColor2),
+    ColorSequenceKeypoint.new(1, CONFIG.AccentColor),
+})
+TopLineGrad.Parent = TopLine
 
--- ═══════════════════════════════════════════════════════════════════════
---                         THANH TIÊU ĐỀ
--- ═══════════════════════════════════════════════════════════════════════
-local TB = Instance.new("Frame")
-TB.Size = UDim2.new(1, 0, 0, 56)
-TB.BackgroundColor3 = C.Surface
-TB.BorderSizePixel = 0
-TB.ZIndex = 5
-TB.Parent = MF
-grad(TB, Color3.fromRGB(16, 14, 30), Color3.fromRGB(10, 9, 18), 135)
+-- Icon logo
+local LogoFrame = Instance.new("Frame")
+LogoFrame.Size = UDim2.new(0, 34, 0, 34)
+LogoFrame.Position = UDim2.new(0, 12, 0.5, -17)
+LogoFrame.BackgroundColor3 = CONFIG.AccentColor
+LogoFrame.BorderSizePixel = 0
+LogoFrame.Parent = TopBar
+CreateCorner(LogoFrame, 8)
+local LogoLabel = Instance.new("TextLabel")
+LogoLabel.Size = UDim2.new(1, 0, 1, 0)
+LogoLabel.BackgroundTransparency = 1
+LogoLabel.Text = "FL"
+LogoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+LogoLabel.Font = CONFIG.Font
+LogoLabel.TextSize = 15
+LogoLabel.Parent = LogoFrame
 
--- Logo
-local logo = Instance.new("Frame")
-logo.Size = UDim2.new(0, 38, 0, 38)
-logo.Position = UDim2.new(0, 14, 0.5, -19)
-logo.BackgroundColor3 = C.Accent
-logo.ZIndex = 6
-logo.Parent = TB
-corner(logo, 19)
-grad(logo, C.Accent, C.AccentD, 135)
+-- Tên menu
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(0, 200, 0, 24)
+TitleLabel.Position = UDim2.new(0, 54, 0, 8)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = CONFIG.Title
+TitleLabel.TextColor3 = CONFIG.TextColor
+TitleLabel.Font = CONFIG.Font
+TitleLabel.TextSize = 16
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TopBar
+local TitleGrad = Instance.new("UIGradient")
+TitleGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, CONFIG.AccentColor2),
+})
+TitleGrad.Parent = TitleLabel
 
-local logoTxt = Instance.new("TextLabel")
-logoTxt.Size = UDim2.new(1, 0, 1, 0)
-logoTxt.BackgroundTransparency = 1
-logoTxt.Text = "F"
-logoTxt.Font = Enum.Font.GothamBlack
-logoTxt.TextSize = 20
-logoTxt.TextColor3 = Color3.fromRGB(20, 10, 0)
-logoTxt.ZIndex = 7
-logoTxt.Parent = logo
+local SubTitleLabel = Instance.new("TextLabel")
+SubTitleLabel.Size = UDim2.new(0, 200, 0, 16)
+SubTitleLabel.Position = UDim2.new(0, 54, 0, 30)
+SubTitleLabel.BackgroundTransparency = 1
+SubTitleLabel.Text = CONFIG.SubTitle
+SubTitleLabel.TextColor3 = CONFIG.SubTextColor
+SubTitleLabel.Font = CONFIG.FontLight
+SubTitleLabel.TextSize = 12
+SubTitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+SubTitleLabel.Parent = TopBar
 
--- Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0, 220, 0, 24)
-title.Position = UDim2.new(0, 60, 0, 8)
-title.BackgroundTransparency = 1
-title.Text = "FAM LV MENU"
-title.Font = Enum.Font.GothamBlack
-title.TextSize = 16
-title.TextColor3 = C.TxtW
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.ZIndex = 6
-title.Parent = TB
+-- Nút đóng X
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -42, 0.5, -15)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 80)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = CONFIG.Font
+CloseBtn.TextSize = 13
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Parent = TopBar
+CreateCorner(CloseBtn, 8)
 
-local sub = Instance.new("TextLabel")
-sub.Size = UDim2.new(0, 220, 0, 16)
-sub.Position = UDim2.new(0, 60, 0, 30)
-sub.BackgroundTransparency = 1
-sub.Text = "10 CHỨC NĂNG VIP ✦ v3.0"
-sub.Font = Enum.Font.Gotham
-sub.TextSize = 11
-sub.TextColor3 = C.Accent
-sub.TextXAlignment = Enum.TextXAlignment.Left
-sub.ZIndex = 6
-sub.Parent = TB
+-- Nút minimize
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 30, 0, 30)
+MinBtn.Position = UDim2.new(1, -78, 0.5, -15)
+MinBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+MinBtn.Text = "—"
+MinBtn.TextColor3 = CONFIG.SubTextColor
+MinBtn.Font = CONFIG.Font
+MinBtn.TextSize = 13
+MinBtn.BorderSizePixel = 0
+MinBtn.Parent = TopBar
+CreateCorner(MinBtn, 8)
 
--- Close button
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -42, 0.5, -15)
-closeBtn.BackgroundColor3 = C.Red
-closeBtn.Text = "✕"
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 13
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.ZIndex = 6
-closeBtn.Parent = TB
-corner(closeBtn, 8)
+-- ══════════════════════════════════════
+--       TAB SIDEBAR (trái)
+-- ══════════════════════════════════════
+local Sidebar = Instance.new("Frame")
+Sidebar.Name = "Sidebar"
+Sidebar.Size = UDim2.new(0, 140, 1, -52)
+Sidebar.Position = UDim2.new(0, 0, 0, 52)
+Sidebar.BackgroundColor3 = Color3.fromRGB(14, 10, 26)
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = MainFrame
 
-closeBtn.MouseButton1Click:Connect(function()
-    tw(MF, {Size = UDim2.new(0, 580, 0, 0), Position = UDim2.new(0.5, -290, 0.5, 0)}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-    task.wait(0.35)
-    SG:Destroy()
-end)
+-- Đường kẻ phải sidebar
+local SidebarLine = Instance.new("Frame")
+SidebarLine.Size = UDim2.new(0, 1, 1, 0)
+SidebarLine.Position = UDim2.new(1, -1, 0, 0)
+SidebarLine.BackgroundColor3 = CONFIG.AccentColor
+SidebarLine.BackgroundTransparency = 0.7
+SidebarLine.BorderSizePixel = 0
+SidebarLine.Parent = Sidebar
 
--- Minimize button
-local minBtn = Instance.new("TextButton")
-minBtn.Size = UDim2.new(0, 30, 0, 30)
-minBtn.Position = UDim2.new(1, -80, 0.5, -15)
-minBtn.BackgroundColor3 = Color3.fromRGB(255, 185, 30)
-minBtn.Text = "−"
-minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 18
-minBtn.TextColor3 = Color3.fromRGB(80, 45, 0)
-minBtn.ZIndex = 6
-minBtn.Parent = TB
-corner(minBtn, 8)
+local TabList = Instance.new("UIListLayout")
+TabList.Padding = UDim.new(0, 4)
+TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+TabList.Parent = Sidebar
+local TabPad = Instance.new("UIPadding")
+TabPad.PaddingTop = UDim.new(0, 10)
+TabPad.Parent = Sidebar
 
-local minimized = false
-minBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    tw(MF, {Size = minimized and UDim2.new(0, 580, 0, 56) or UDim2.new(0, 580, 0, 460)}, 0.35, Enum.EasingStyle.Back)
-end)
+-- ══════════════════════════════════════
+--       NỘI DUNG PANEL (phải)
+-- ══════════════════════════════════════
+local ContentArea = Instance.new("Frame")
+ContentArea.Name = "ContentArea"
+ContentArea.Size = UDim2.new(1, -140, 1, -52)
+ContentArea.Position = UDim2.new(0, 140, 0, 52)
+ContentArea.BackgroundTransparency = 1
+ContentArea.BorderSizePixel = 0
+ContentArea.Parent = MainFrame
 
--- Drag
-local drag, dragStart, startPos
-TB.InputBegan:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        drag = true
-        dragStart = i.Position
-        startPos = MF.Position
-    end
-end)
-UserInputService.InputChanged:Connect(function(i)
-    if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
-        local d = i.Position - dragStart
-        MF.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end
-end)
-
--- ═══════════════════════════════════════════════════════════════════════
---                         SIDEBAR / TABS
--- ═══════════════════════════════════════════════════════════════════════
-local SB = Instance.new("Frame")
-SB.Size = UDim2.new(0, 145, 1, -56)
-SB.Position = UDim2.new(0, 0, 0, 56)
-SB.BackgroundColor3 = C.Surface
-SB.BorderSizePixel = 0
-SB.ZIndex = 3
-SB.Parent = MF
-grad(SB, Color3.fromRGB(14, 12, 28), Color3.fromRGB(10, 9, 18), 180)
-
-local sbList = Instance.new("UIListLayout")
-sbList.SortOrder = Enum.SortOrder.LayoutOrder
-sbList.Padding = UDim.new(0, 5)
-sbList.Parent = SB
-
-local sbPad = Instance.new("UIPadding")
-sbPad.PaddingTop = UDim.new(0, 12)
-sbPad.PaddingLeft = UDim.new(0, 10)
-sbPad.PaddingRight = UDim.new(0, 10)
-sbPad.Parent = SB
-
-local sbDiv = Instance.new("Frame")
-sbDiv.Size = UDim2.new(0, 1, 1, -56)
-sbDiv.Position = UDim2.new(0, 145, 0, 56)
-sbDiv.BackgroundColor3 = C.Border
-sbDiv.BorderSizePixel = 0
-sbDiv.ZIndex = 4
-sbDiv.Parent = MF
-
--- Content area
-local CA = Instance.new("Frame")
-CA.Size = UDim2.new(1, -146, 1, -56)
-CA.Position = UDim2.new(0, 146, 0, 56)
-CA.BackgroundTransparency = 1
-CA.ClipsDescendants = true
-CA.ZIndex = 3
-CA.Parent = MF
-
--- ═══════════════════════════════════════════════════════════════════════
---                         TAB SYSTEM
--- ═══════════════════════════════════════════════════════════════════════
+-- ══════════════════════════════════════
+--       HỆ THỐNG TAB
+-- ══════════════════════════════════════
 local Tabs = {}
-local Pages = {}
 local ActiveTab = nil
+local TabPages = {}
 
-local TabDefs = {
-    {name = "Nhặt Đồ", icon = "🎁", order = 1},
-    {name = "Di Chuyển", icon = "🏃", order = 2},
-    {name = "Combat", icon = "⚔", order = 3},
-    {name = "ESP", icon = "👁", order = 4},
-    {name = "Tiện Ích", icon = "⚙", order = 5},
+local TabIcons = {
+    ["⚡ Combat"] = "⚡",
+    ["🚀 Movement"] = "🚀",
+    ["👁 ESP"] = "👁",
+    ["⚙ Misc"] = "⚙",
+    ["ℹ Info"] = "ℹ",
 }
 
-local function SwitchTab(name)
-    if ActiveTab == name then return end
-    ActiveTab = name
-    for n, pg in pairs(Pages) do pg.Visible = (n == name) end
-    for n, btn in pairs(Tabs) do
-        if n == name then
-            tw(btn, {BackgroundColor3 = C.Accent, BackgroundTransparency = 0}, 0.2)
-            btn.TextColor3 = Color3.fromRGB(20, 10, 0)
+local function CreateTab(name)
+    -- Nút tab bên sidebar
+    local TabBtn = Instance.new("TextButton")
+    TabBtn.Name = name
+    TabBtn.Size = UDim2.new(1, -16, 0, 38)
+    TabBtn.BackgroundColor3 = Color3.fromRGB(20, 16, 36)
+    TabBtn.BackgroundTransparency = 1
+    TabBtn.Text = name
+    TabBtn.TextColor3 = CONFIG.SubTextColor
+    TabBtn.Font = CONFIG.FontLight
+    TabBtn.TextSize = 13
+    TabBtn.BorderSizePixel = 0
+    TabBtn.Parent = Sidebar
+    CreateCorner(TabBtn, 8)
+
+    -- Indicator trái tab
+    local Indicator = Instance.new("Frame")
+    Indicator.Size = UDim2.new(0, 3, 0.6, 0)
+    Indicator.Position = UDim2.new(0, 2, 0.2, 0)
+    Indicator.BackgroundColor3 = CONFIG.AccentColor
+    Indicator.BackgroundTransparency = 1
+    Indicator.BorderSizePixel = 0
+    Indicator.Parent = TabBtn
+    CreateCorner(Indicator, 4)
+
+    -- Page cho tab
+    local Page = Instance.new("ScrollingFrame")
+    Page.Name = name .. "_Page"
+    Page.Size = UDim2.new(1, 0, 1, 0)
+    Page.BackgroundTransparency = 1
+    Page.BorderSizePixel = 0
+    Page.ScrollBarThickness = 3
+    Page.ScrollBarImageColor3 = CONFIG.AccentColor
+    Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Page.Visible = false
+    Page.Parent = ContentArea
+
+    local PageList = Instance.new("UIListLayout")
+    PageList.Padding = UDim.new(0, 8)
+    PageList.Parent = Page
+    local PagePad = Instance.new("UIPadding")
+    PagePad.PaddingTop = UDim.new(0, 12)
+    PagePad.PaddingLeft = UDim.new(0, 14)
+    PagePad.PaddingRight = UDim.new(0, 14)
+    PagePad.Parent = Page
+
+    Tabs[name] = { Btn = TabBtn, Page = Page, Indicator = Indicator }
+    TabPages[name] = Page
+
+    TabBtn.MouseButton1Click:Connect(function()
+        -- Ẩn tất cả tab
+        for tName, tData in pairs(Tabs) do
+            tData.Page.Visible = false
+            Tween(tData.Btn, { BackgroundTransparency = 1, TextColor3 = CONFIG.SubTextColor }, 0.2)
+            Tween(tData.Indicator, { BackgroundTransparency = 1 }, 0.2)
+            tData.Btn.Font = CONFIG.FontLight
+        end
+        -- Hiện tab được chọn
+        Page.Visible = true
+        Tween(TabBtn, { BackgroundTransparency = 0.85, TextColor3 = CONFIG.TextColor }, 0.2)
+        Tween(Indicator, { BackgroundTransparency = 0 }, 0.2)
+        TabBtn.Font = CONFIG.Font
+        ActiveTab = name
+    end)
+
+    TabBtn.MouseEnter:Connect(function()
+        if ActiveTab ~= name then
+            Tween(TabBtn, { BackgroundTransparency = 0.93 }, 0.15)
+        end
+    end)
+    TabBtn.MouseLeave:Connect(function()
+        if ActiveTab ~= name then
+            Tween(TabBtn, { BackgroundTransparency = 1 }, 0.15)
+        end
+    end)
+
+    return Page
+end
+
+-- ══════════════════════════════════════
+--       TẠO TOGGLE BUTTON
+-- ══════════════════════════════════════
+local function CreateToggle(page, label, desc, callback)
+    local state = false
+
+    local Row = Instance.new("Frame")
+    Row.Size = UDim2.new(1, 0, 0, 58)
+    Row.BackgroundColor3 = CONFIG.BgColor2
+    Row.BorderSizePixel = 0
+    Row.Parent = page
+    CreateCorner(Row, 8)
+    CreateStroke(Row, CONFIG.AccentColor, 1, 0.8)
+
+    local LabelTxt = Instance.new("TextLabel")
+    LabelTxt.Size = UDim2.new(1, -70, 0, 22)
+    LabelTxt.Position = UDim2.new(0, 14, 0, 10)
+    LabelTxt.BackgroundTransparency = 1
+    LabelTxt.Text = label
+    LabelTxt.TextColor3 = CONFIG.TextColor
+    LabelTxt.Font = CONFIG.Font
+    LabelTxt.TextSize = 13
+    LabelTxt.TextXAlignment = Enum.TextXAlignment.Left
+    LabelTxt.Parent = Row
+
+    local DescTxt = Instance.new("TextLabel")
+    DescTxt.Size = UDim2.new(1, -70, 0, 16)
+    DescTxt.Position = UDim2.new(0, 14, 0, 33)
+    DescTxt.BackgroundTransparency = 1
+    DescTxt.Text = desc or ""
+    DescTxt.TextColor3 = CONFIG.SubTextColor
+    DescTxt.Font = CONFIG.FontLight
+    DescTxt.TextSize = 11
+    DescTxt.TextXAlignment = Enum.TextXAlignment.Left
+    DescTxt.Parent = Row
+
+    -- Toggle switch
+    local ToggleBg = Instance.new("Frame")
+    ToggleBg.Size = UDim2.new(0, 44, 0, 24)
+    ToggleBg.Position = UDim2.new(1, -58, 0.5, -12)
+    ToggleBg.BackgroundColor3 = CONFIG.ToggleOff
+    ToggleBg.BorderSizePixel = 0
+    ToggleBg.Parent = Row
+    CreateCorner(ToggleBg, 12)
+
+    local ToggleKnob = Instance.new("Frame")
+    ToggleKnob.Size = UDim2.new(0, 18, 0, 18)
+    ToggleKnob.Position = UDim2.new(0, 3, 0.5, -9)
+    ToggleKnob.BackgroundColor3 = Color3.fromRGB(200, 200, 220)
+    ToggleKnob.BorderSizePixel = 0
+    ToggleKnob.Parent = ToggleBg
+    CreateCorner(ToggleKnob, 9)
+
+    local ToggleBtn = Instance.new("TextButton")
+    ToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+    ToggleBtn.BackgroundTransparency = 1
+    ToggleBtn.Text = ""
+    ToggleBtn.Parent = Row
+
+    ToggleBtn.MouseButton1Click:Connect(function()
+        state = not state
+        if state then
+            Tween(ToggleBg, { BackgroundColor3 = CONFIG.ToggleOn }, 0.25)
+            Tween(ToggleKnob, { Position = UDim2.new(0, 23, 0.5, -9), BackgroundColor3 = Color3.fromRGB(255, 255, 255) }, 0.25)
+            Tween(Row, { BackgroundColor3 = Color3.fromRGB(22, 18, 40) }, 0.2)
         else
-            tw(btn, {BackgroundColor3 = C.BG, BackgroundTransparency = 1}, 0.2)
-            btn.TextColor3 = C.TxtG
+            Tween(ToggleBg, { BackgroundColor3 = CONFIG.ToggleOff }, 0.25)
+            Tween(ToggleKnob, { Position = UDim2.new(0, 3, 0.5, -9), BackgroundColor3 = Color3.fromRGB(200, 200, 220) }, 0.25)
+            Tween(Row, { BackgroundColor3 = CONFIG.BgColor2 }, 0.2)
         end
-    end
-end
+        if callback then callback(state) end
+    end)
 
-for i, t in ipairs(TabDefs) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 42)
-    btn.BackgroundColor3 = C.BG
-    btn.BackgroundTransparency = 1
-    btn.Text = t.icon .. "  " .. t.name
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 12
-    btn.TextColor3 = C.TxtG
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.LayoutOrder = t.order
-    btn.ZIndex = 5
-    btn.Parent = SB
-    corner(btn, 9)
-    
-    local p = Instance.new("UIPadding")
-    p.PaddingLeft = UDim.new(0, 10)
-    p.Parent = btn
-    
-    btn.MouseEnter:Connect(function()
-        if ActiveTab ~= t.name then
-            tw(btn, {BackgroundColor3 = Color3.fromRGB(35, 30, 55), BackgroundTransparency = 0}, 0.15)
+    Row.MouseEnter:Connect(function()
+        Tween(Row, { BackgroundColor3 = Color3.fromRGB(20, 16, 36) }, 0.15)
+    end)
+    Row.MouseLeave:Connect(function()
+        if not state then
+            Tween(Row, { BackgroundColor3 = CONFIG.BgColor2 }, 0.15)
         end
     end)
-    btn.MouseLeave:Connect(function()
-        if ActiveTab ~= t.name then
-            tw(btn, {BackgroundTransparency = 1}, 0.15)
-        end
-    end)
-    
-    local pg = Instance.new("ScrollingFrame")
-    pg.Size = UDim2.new(1, 0, 1, 0)
-    pg.BackgroundTransparency = 1
-    pg.ScrollBarThickness = 4
-    pg.ScrollBarImageColor3 = C.Accent
-    pg.Visible = false
-    pg.ZIndex = 3
-    pg.Parent = CA
-    
-    local pgl = Instance.new("UIListLayout")
-    pgl.SortOrder = Enum.SortOrder.LayoutOrder
-    pgl.Padding = UDim.new(0, 8)
-    pgl.Parent = pg
-    pgl:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        pg.CanvasSize = UDim2.new(0, 0, 0, pgl.AbsoluteContentSize.Y + 20)
-    end)
-    
-    local pgpad = Instance.new("UIPadding")
-    pgpad.PaddingTop = UDim.new(0, 14)
-    pgpad.PaddingLeft = UDim.new(0, 14)
-    pgpad.PaddingRight = UDim.new(0, 16)
-    pgpad.Parent = pg
-    
-    Tabs[t.name] = btn
-    Pages[t.name] = pg
-    btn.MouseButton1Click:Connect(function() SwitchTab(t.name) end)
 end
 
--- ═══════════════════════════════════════════════════════════════════════
---                         COMPONENT BUILDERS
--- ═══════════════════════════════════════════════════════════════════════
-local function section(page, txt)
-    local f = Instance.new("Frame")
-    f.Size = UDim2.new(1, 0, 0, 24)
-    f.BackgroundTransparency = 1
-    f.Parent = page
-    
-    local line = Instance.new("Frame")
-    line.Size = UDim2.new(1, 0, 0, 1)
-    line.Position = UDim2.new(0, 0, 0.5, 0)
-    line.BackgroundColor3 = C.Border
-    line.BorderSizePixel = 0
-    line.Parent = f
-    
-    local lb = Instance.new("TextLabel")
-    lb.Size = UDim2.new(0, 0, 1, 0)
-    lb.AutomaticSize = Enum.AutomaticSize.X
-    lb.BackgroundColor3 = C.BG
-    lb.Text = "  ▸ " .. txt:upper() .. "  "
-    lb.Font = Enum.Font.GothamBold
-    lb.TextSize = 10
-    lb.TextColor3 = C.Accent
-    lb.ZIndex = 4
-    lb.Parent = f
-end
+-- ══════════════════════════════════════
+--       TẠO BUTTON
+-- ══════════════════════════════════════
+local function CreateButton(page, label, desc, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, 0, 0, 46)
+    Btn.BackgroundColor3 = CONFIG.BgColor2
+    Btn.BorderSizePixel = 0
+    Btn.Text = ""
+    Btn.Parent = page
+    CreateCorner(Btn, 8)
+    CreateStroke(Btn, CONFIG.AccentColor, 1, 0.7)
 
-local function mkToggle(page, lbl, default, cb)
-    local s = {v = default or false}
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 44)
-    row.BackgroundColor3 = C.Card
-    row.Parent = page
-    corner(row, 10)
-    stroke(row, C.Border, 1)
-    
-    local lb = Instance.new("TextLabel")
-    lb.Size = UDim2.new(1, -65, 1, 0)
-    lb.Position = UDim2.new(0, 14, 0, 0)
-    lb.BackgroundTransparency = 1
-    lb.Text = lbl
-    lb.Font = Enum.Font.Gotham
-    lb.TextSize = 12
-    lb.TextColor3 = C.TxtW
-    lb.TextXAlignment = Enum.TextXAlignment.Left
-    lb.Parent = row
-    
-    local track = Instance.new("Frame")
-    track.Size = UDim2.new(0, 46, 0, 24)
-    track.Position = UDim2.new(1, -58, 0.5, -12)
-    track.BackgroundColor3 = s.v and C.ON or C.OFF
-    track.Parent = row
-    corner(track, 12)
-    
-    local thumb = Instance.new("Frame")
-    thumb.Size = UDim2.new(0, 18, 0, 18)
-    thumb.Position = s.v and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
-    thumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    thumb.Parent = track
-    corner(thumb, 9)
-    
-    local status = Instance.new("TextLabel")
-    status.Size = UDim2.new(0, 36, 0, 14)
-    status.Position = UDim2.new(1, -58, 0.5, -20)
-    status.BackgroundTransparency = 1
-    status.Text = s.v and "BẬT" or "TẮT"
-    status.Font = Enum.Font.GothamBold
-    status.TextSize = 9
-    status.TextColor3 = s.v and C.ON or C.TxtG
-    status.Parent = row
-    
-    local function upd()
-        tw(track, {BackgroundColor3 = s.v and C.ON or C.OFF}, 0.2)
-        tw(thumb, {Position = s.v and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)}, 0.2, Enum.EasingStyle.Back)
-        status.Text = s.v and "BẬT" or "TẮT"
-        status.TextColor3 = s.v and C.ON or C.TxtG
-        if cb then cb(s.v) end
+    local LabelTxt = Instance.new("TextLabel")
+    LabelTxt.Size = UDim2.new(1, -20, 0, 20)
+    LabelTxt.Position = UDim2.new(0, 14, 0, 8)
+    LabelTxt.BackgroundTransparency = 1
+    LabelTxt.Text = label
+    LabelTxt.TextColor3 = CONFIG.TextColor
+    LabelTxt.Font = CONFIG.Font
+    LabelTxt.TextSize = 13
+    LabelTxt.TextXAlignment = Enum.TextXAlignment.Left
+    LabelTxt.Parent = Btn
+
+    if desc then
+        LabelTxt.Position = UDim2.new(0, 14, 0, 6)
+        local DescTxt = Instance.new("TextLabel")
+        DescTxt.Size = UDim2.new(1, -20, 0, 14)
+        DescTxt.Position = UDim2.new(0, 14, 0, 27)
+        DescTxt.BackgroundTransparency = 1
+        DescTxt.Text = desc
+        DescTxt.TextColor3 = CONFIG.SubTextColor
+        DescTxt.Font = CONFIG.FontLight
+        DescTxt.TextSize = 11
+        DescTxt.TextXAlignment = Enum.TextXAlignment.Left
+        DescTxt.Parent = Btn
     end
-    
-    local tbtn = Instance.new("TextButton")
-    tbtn.Size = UDim2.new(1, 0, 1, 0)
-    tbtn.BackgroundTransparency = 1
-    tbtn.Text = ""
-    tbtn.Parent = row
-    tbtn.MouseButton1Click:Connect(function()
-        s.v = not s.v
-        upd()
+
+    -- Arrow icon
+    local Arrow = Instance.new("TextLabel")
+    Arrow.Size = UDim2.new(0, 20, 1, 0)
+    Arrow.Position = UDim2.new(1, -28, 0, 0)
+    Arrow.BackgroundTransparency = 1
+    Arrow.Text = "›"
+    Arrow.TextColor3 = CONFIG.AccentColor
+    Arrow.Font = CONFIG.Font
+    Arrow.TextSize = 20
+    Arrow.Parent = Btn
+
+    Btn.MouseEnter:Connect(function()
+        Tween(Btn, { BackgroundColor3 = Color3.fromRGB(22, 18, 42) }, 0.15)
+        Tween(Arrow, { TextColor3 = CONFIG.AccentColor2 }, 0.15)
     end)
-    
-    row.MouseEnter:Connect(function() tw(row, {BackgroundColor3 = Color3.fromRGB(28, 24, 48)}, 0.15) end)
-    row.MouseLeave:Connect(function() tw(row, {BackgroundColor3 = C.Card}, 0.15) end)
-    
-    upd()
-    return s
-end
-
-local function mkSlider(page, lbl, min, max, default, cb)
-    local val = default or min
-    local draggingS = false
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 58)
-    row.BackgroundColor3 = C.Card
-    row.Parent = page
-    corner(row, 10)
-    stroke(row, C.Border, 1)
-    
-    local top = Instance.new("Frame")
-    top.Size = UDim2.new(1, -28, 0, 28)
-    top.Position = UDim2.new(0, 14, 0, 0)
-    top.BackgroundTransparency = 1
-    top.Parent = row
-    
-    local lb = Instance.new("TextLabel")
-    lb.Size = UDim2.new(0.65, 0, 1, 0)
-    lb.BackgroundTransparency = 1
-    lb.Text = lbl
-    lb.Font = Enum.Font.Gotham
-    lb.TextSize = 12
-    lb.TextColor3 = C.TxtW
-    lb.TextXAlignment = Enum.TextXAlignment.Left
-    lb.Parent = top
-    
-    local vl = Instance.new("TextLabel")
-    vl.Size = UDim2.new(0.35, 0, 1, 0)
-    vl.Position = UDim2.new(0.65, 0, 0, 0)
-    vl.BackgroundTransparency = 1
-    vl.Text = tostring(val)
-    vl.Font = Enum.Font.GothamBold
-    vl.TextSize = 13
-    vl.TextColor3 = C.Accent
-    vl.TextXAlignment = Enum.TextXAlignment.Right
-    vl.Parent = top
-    
-    local track = Instance.new("Frame")
-    track.Size = UDim2.new(1, -28, 0, 7)
-    track.Position = UDim2.new(0, 14, 0, 38)
-    track.BackgroundColor3 = Color3.fromRGB(40, 35, 65)
-    track.Parent = row
-    corner(track, 3)
-    
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((val - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = C.Accent
-    fill.Parent = track
-    corner(fill, 3)
-    grad(fill, C.Accent, C.AccentD, 0)
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 16, 0, 16)
-    knob.Position = UDim2.new((val - min) / (max - min), -8, 0.5, -8)
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    knob.Parent = track
-    corner(knob, 8)
-    
-    local sb = Instance.new("TextButton")
-    sb.Size = UDim2.new(1, 0, 1, 0)
-    sb.BackgroundTransparency = 1
-    sb.Text = ""
-    sb.Parent = track
-    
-    local function setV(v)
-        val = math.clamp(math.floor(v), min, max)
-        local p = (val - min) / (max - min)
-        tw(fill, {Size = UDim2.new(p, 0, 1, 0)}, 0.05)
-        tw(knob, {Position = UDim2.new(p, -8, 0.5, -8)}, 0.05)
-        vl.Text = tostring(val)
-        if cb then cb(val) end
-    end
-    
-    sb.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then draggingS = true end
+    Btn.MouseLeave:Connect(function()
+        Tween(Btn, { BackgroundColor3 = CONFIG.BgColor2 }, 0.15)
+        Tween(Arrow, { TextColor3 = CONFIG.AccentColor }, 0.15)
     end)
-    UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then draggingS = false end
-    end)
-    UserInputService.InputChanged:Connect(function(i)
-        if draggingS and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local p = math.clamp((i.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-            setV(min + p * (max - min))
-        end
-    end)
-    
-    return {Get = function() return val end, Set = setV}
-end
-
-local function mkButton(page, lbl, sub_, cb, accent)
-    accent = accent or C.Accent
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 46)
-    btn.BackgroundColor3 = accent
-    btn.Text = ""
-    btn.ZIndex = 3
-    btn.Parent = page
-    corner(btn, 10)
-    grad(btn, accent, Color3.fromRGB(math.max(accent.R * 255 - 40, 0), math.max(accent.G * 255 - 40, 0), math.max(accent.B * 255 - 40, 0)), 135)
-    
-    local lb = Instance.new("TextLabel")
-    lb.Size = UDim2.new(1, 0, 0, 24)
-    lb.Position = UDim2.new(0, 14, 0, 5)
-    lb.BackgroundTransparency = 1
-    lb.Text = lbl
-    lb.Font = Enum.Font.GothamBold
-    lb.TextSize = 13
-    lb.TextColor3 = Color3.fromRGB(20, 10, 0)
-    lb.TextXAlignment = Enum.TextXAlignment.Left
-    lb.ZIndex = 4
-    lb.Parent = btn
-    
-    if sub_ then
-        local s = Instance.new("TextLabel")
-        s.Size = UDim2.new(1, 0, 0, 14)
-        s.Position = UDim2.new(0, 14, 0, 26)
-        s.BackgroundTransparency = 1
-        s.Text = sub_
-        s.Font = Enum.Font.Gotham
-        s.TextSize = 10
-        s.TextColor3 = Color3.fromRGB(80, 50, 0)
-        s.TextXAlignment = Enum.TextXAlignment.Left
-        s.ZIndex = 4
-        s.Parent = btn
-    end
-    
-    btn.MouseEnter:Connect(function() tw(btn, {BackgroundColor3 = Color3.fromRGB(255, 205, 40)}, 0.15) end)
-    btn.MouseLeave:Connect(function() tw(btn, {BackgroundColor3 = accent}, 0.15) end)
-    btn.MouseButton1Click:Connect(function()
-        tw(btn, {Size = UDim2.new(0.97, 0, 0, 43)}, 0.1)
-        task.wait(0.1)
-        tw(btn, {Size = UDim2.new(1, 0, 0, 46)}, 0.15, Enum.EasingStyle.Back)
-        if cb then cb() end
-    end)
-end
-
--- ═══════════════════════════════════════════════════════════════════════
--- ═══════════════════════════════════════════════════════════════════════
---          10 CHỨC NĂNG VIP - HACK THẬT 100% - TIẾNG VIỆT
--- ═══════════════════════════════════════════════════════════════════════
--- ═══════════════════════════════════════════════════════════════════════
-
--- ═══════════════════════════════════════════════════════════════════════
--- TAB 1: NHẶT ĐỒ (2 chức năng)
--- ═══════════════════════════════════════════════════════════════════════
-local P1 = Pages["Nhặt Đồ"]
-section(P1, "Tự Động Nhặt Đồ")
-
--- ===== CHỨC NĂNG 1: AUTO NHẶT RƯƠNG =====
-local autoChestOn = false
-
-mkToggle(P1, "🎁  Auto Nhặt Rương (Chest)", false, function(v)
-    autoChestOn = v
-    if v then
-        notify("🎁 Auto Nhặt Rương: BẬT", "🎁", C.Green)
-        
-        task.spawn(function()
-            while autoChestOn do
-                local char = LP.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    local root = char.HumanoidRootPart
-                    
-                    for _, obj in pairs(Workspace:GetDescendants()) do
-                        if not autoChestOn then break end
-                        local name = obj.Name:lower()
-                        if (name:find("chest") or name:find("ruong") or name:find("rương") or 
-                            name:find("treasure") or name:find("goldchest") or name:find("diamondchest")) then
-                            if obj:IsA("BasePart") or obj:IsA("Model") then
-                                local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                                if part and part.Parent then
-                                    local dist = (root.Position - part.Position).Magnitude
-                                    if dist < 100 then
-                                        root.CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
-                                        task.wait(0.15)
-                                        
-                                        -- Cách 1: Fire ProximityPrompt
-                                        pcall(function()
-                                            for _, child in pairs(obj:GetDescendants()) do
-                                                if child:IsA("ProximityPrompt") then
-                                                    fireproximityprompt(child)
-                                                end
-                                            end
-                                        end)
-                                        
-                                        -- Cách 2: Fire TouchInterest
-                                        pcall(function()
-                                            if part:FindFirstChild("TouchInterest") then
-                                                firetouchinterest(root, part, 0)
-                                                task.wait(0.05)
-                                                firetouchinterest(root, part, 1)
-                                            end
-                                        end)
-                                        
-                                        -- Cách 3: Fire ClickDetector
-                                        pcall(function()
-                                            local cd = obj:FindFirstChildOfClass("ClickDetector")
-                                            if cd then fireclickdetector(cd) end
-                                        end)
-                                        
-                                        task.wait(0.3)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-                task.wait(0.8)
-            end
+    Btn.MouseButton1Click:Connect(function()
+        Tween(Btn, { BackgroundColor3 = Color3.fromRGB(30, 24, 58) }, 0.1)
+        task.delay(0.15, function()
+            Tween(Btn, { BackgroundColor3 = Color3.fromRGB(22, 18, 42) }, 0.15)
         end)
-    else
-        notify("🎁 Auto Nhặt Rương: TẮT", "🎁", C.Red)
-    end
-end)
+        if callback then callback() end
+    end)
+end
 
--- ===== CHỨC NĂNG 2: AUTO NHẶT TRÁI ÁC QUỶ =====
-local autoFruitOn = false
+-- ══════════════════════════════════════
+--       TẠO SLIDER
+-- ══════════════════════════════════════
+local function CreateSlider(page, label, min, max, default, callback)
+    local value = default or min
 
-mkToggle(P1, "🍎  Auto Nhặt Trái Ác Quỷ", false, function(v)
-    autoFruitOn = v
-    if v then
-        notify("🍎 Auto Nhặt Trái: BẬT", "🍎", C.Green)
-        
-        task.spawn(function()
-            while autoFruitOn do
-                local char = LP.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    local root = char.HumanoidRootPart
-                    
-                    for _, obj in pairs(Workspace:GetDescendants()) do
-                        if not autoFruitOn then break end
-                        local name = obj.Name:lower()
-                        
-                        -- Detect fruit bằng nhiều pattern
-                        if (name:find("fruit") or name:find("trai") or name:find("trái") or name:find("devil") or
-                            name:find("bomu") or name:find("mera") or name:find("suna") or name:find("gura") or 
-                            name:find("pika") or name:find("magu") or name:find("tori") or name:find("dragon") or
-                            name:find("phoenix") or name:find("quake") or name:find("string") or name:find("dough") or
-                            name:find("venom") or name:find("shadow") or name:find("control") or name:find("spirit") or
-                            name:find("leopard") or name:find("mammoth") or name:find("t-rex") or name:find("kitsune")) then
-                            
-                            if obj:IsA("BasePart") or obj:IsA("Model") or obj:IsA("Tool") then
-                                local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                                if part then
-                                    local dist = (root.Position - part.Position).Magnitude
-                                    if dist < 150 then
-                                        notify("🍎 Phát hiện Trái: " .. obj.Name, "🍎", C.Accent)
-                                        root.CFrame = CFrame.new(part.Position + Vector3.new(0, 4, 0))
-                                        task.wait(0.2)
-                                        
-                                        pcall(function()
-                                            for _, child in pairs(obj:GetDescendants()) do
-                                                if child:IsA("ProximityPrompt") then
-                                                    fireproximityprompt(child)
-                                                end
-                                            end
-                                        end)
-                                        
-                                        pcall(function()
-                                            if obj:IsA("Tool") then
-                                                LP.Character.Humanoid:EquipTool(obj)
-                                            end
-                                        end)
-                                        
-                                        task.wait(0.5)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-                task.wait(1.0)
-            end
-        end)
-    else
-        notify("🍎 Auto Nhặt Trái: TẮT", "🍎", C.Red)
-    end
-end)
+    local Row = Instance.new("Frame")
+    Row.Size = UDim2.new(1, 0, 0, 62)
+    Row.BackgroundColor3 = CONFIG.BgColor2
+    Row.BorderSizePixel = 0
+    Row.Parent = page
+    CreateCorner(Row, 8)
+    CreateStroke(Row, CONFIG.AccentColor, 1, 0.8)
 
-mkButton(P1, "📍  Nhặt Tất Cả Trong Vùng", "Teleport & nhặt đồ bán kính 100m", function()
-    local char = LP.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then
-        notify("❌ Không tìm thấy nhân vật!", "❌", C.Red)
-        return
-    end
-    
-    local root = char.HumanoidRootPart
-    local count = 0
-    local items = {}
-    
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local dist = (root.Position - obj.Position).Magnitude
-            if dist < 100 then
-                local n = obj.Name:lower()
-                if n:find("fruit") or n:find("chest") or n:find("coin") or n:find("drop") or 
-                   n:find("box") or n:find("money") or n:find("gold") or n:find("beli") then
-                    table.insert(items, obj)
-                end
-            end
+    local LabelTxt = Instance.new("TextLabel")
+    LabelTxt.Size = UDim2.new(0.7, 0, 0, 20)
+    LabelTxt.Position = UDim2.new(0, 14, 0, 8)
+    LabelTxt.BackgroundTransparency = 1
+    LabelTxt.Text = label
+    LabelTxt.TextColor3 = CONFIG.TextColor
+    LabelTxt.Font = CONFIG.Font
+    LabelTxt.TextSize = 13
+    LabelTxt.TextXAlignment = Enum.TextXAlignment.Left
+    LabelTxt.Parent = Row
+
+    local ValTxt = Instance.new("TextLabel")
+    ValTxt.Size = UDim2.new(0.3, -14, 0, 20)
+    ValTxt.Position = UDim2.new(0.7, 0, 0, 8)
+    ValTxt.BackgroundTransparency = 1
+    ValTxt.Text = tostring(value)
+    ValTxt.TextColor3 = CONFIG.AccentColor2
+    ValTxt.Font = CONFIG.Font
+    ValTxt.TextSize = 13
+    ValTxt.TextXAlignment = Enum.TextXAlignment.Right
+    ValTxt.Parent = Row
+
+    -- Track
+    local Track = Instance.new("Frame")
+    Track.Size = UDim2.new(1, -28, 0, 6)
+    Track.Position = UDim2.new(0, 14, 0, 40)
+    Track.BackgroundColor3 = Color3.fromRGB(30, 28, 50)
+    Track.BorderSizePixel = 0
+    Track.Parent = Row
+    CreateCorner(Track, 3)
+
+    local Fill = Instance.new("Frame")
+    local fillPct = (value - min) / (max - min)
+    Fill.Size = UDim2.new(fillPct, 0, 1, 0)
+    Fill.BackgroundColor3 = CONFIG.AccentColor
+    Fill.BorderSizePixel = 0
+    Fill.Parent = Track
+    CreateCorner(Fill, 3)
+    local FillGrad = Instance.new("UIGradient")
+    FillGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, CONFIG.AccentColor),
+        ColorSequenceKeypoint.new(1, CONFIG.AccentColor2),
+    })
+    FillGrad.Parent = Fill
+
+    -- Knob
+    local Knob = Instance.new("Frame")
+    Knob.Size = UDim2.new(0, 14, 0, 14)
+    Knob.Position = UDim2.new(fillPct, -7, 0.5, -7)
+    Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Knob.BorderSizePixel = 0
+    Knob.ZIndex = 5
+    Knob.Parent = Track
+    CreateCorner(Knob, 7)
+
+    local Drag = Instance.new("TextButton")
+    Drag.Size = UDim2.new(1, 0, 1, 0)
+    Drag.BackgroundTransparency = 1
+    Drag.Text = ""
+    Drag.ZIndex = 10
+    Drag.Parent = Track
+
+    local dragging = false
+    Drag.MouseButton1Down:Connect(function()
+        dragging = true
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
         end
-    end
-    
-    for _, item in ipairs(items) do
-        if item and item.Parent then
-            root.CFrame = CFrame.new(item.Position + Vector3.new(0, 3, 0))
-            
-            pcall(function()
-                if item:FindFirstChild("TouchInterest") then
-                    firetouchinterest(root, item, 0)
-                    task.wait(0.05)
-                    firetouchinterest(root, item, 1)
-                end
-            end)
-            
-            pcall(function()
-                for _, child in pairs(item:GetDescendants()) do
-                    if child:IsA("ProximityPrompt") then
-                        fireproximityprompt(child)
-                    end
-                end
-            end)
-            
-            count = count + 1
-            task.wait(0.12)
+    end)
+    RunService.Heartbeat:Connect(function()
+        if dragging then
+            local mouse = UserInputService:GetMouseLocation()
+            local trackPos = Track.AbsolutePosition
+            local trackSize = Track.AbsoluteSize
+            local rel = math.clamp((mouse.X - trackPos.X) / trackSize.X, 0, 1)
+            value = math.floor(min + (max - min) * rel)
+            ValTxt.Text = tostring(value)
+            Tween(Fill, { Size = UDim2.new(rel, 0, 1, 0) }, 0.05)
+            Tween(Knob, { Position = UDim2.new(rel, -7, 0.5, -7) }, 0.05)
+            if callback then callback(value) end
         end
-    end
-    
-    notify("✅ Đã nhặt " .. count .. " vật phẩm!", "✅", C.Green)
+    end)
+end
+
+-- ══════════════════════════════════════
+--       TẠO LABEL / HEADER
+-- ══════════════════════════════════════
+local function CreateHeader(page, text)
+    local Hdr = Instance.new("Frame")
+    Hdr.Size = UDim2.new(1, 0, 0, 24)
+    Hdr.BackgroundTransparency = 1
+    Hdr.Parent = page
+
+    local Line = Instance.new("Frame")
+    Line.Size = UDim2.new(1, 0, 0, 1)
+    Line.Position = UDim2.new(0, 0, 0.5, 0)
+    Line.BackgroundColor3 = CONFIG.AccentColor
+    Line.BackgroundTransparency = 0.8
+    Line.BorderSizePixel = 0
+    Line.Parent = Hdr
+
+    local Txt = Instance.new("TextLabel")
+    Txt.Size = UDim2.new(0, 0, 1, 0)
+    Txt.AutomaticSize = Enum.AutomaticSize.X
+    Txt.Position = UDim2.new(0, 0, 0, 0)
+    Txt.BackgroundColor3 = CONFIG.BgColor
+    Txt.Text = "  " .. text .. "  "
+    Txt.TextColor3 = CONFIG.AccentColor2
+    Txt.Font = CONFIG.Font
+    Txt.TextSize = 11
+    Txt.BorderSizePixel = 0
+    Txt.Parent = Hdr
+end
+
+-- ══════════════════════════════════════
+--       KHỞI TẠO CÁC TAB
+-- ══════════════════════════════════════
+local CombatPage  = CreateTab("⚡ Combat")
+local MovePage    = CreateTab("🚀 Movement")
+local EspPage     = CreateTab("👁 ESP")
+local MiscPage    = CreateTab("⚙ Misc")
+local InfoPage    = CreateTab("ℹ Info")
+
+-- ══════════════════════════════════════
+--       NỘI DUNG COMBAT TAB
+-- ══════════════════════════════════════
+CreateHeader(CombatPage, "AIMBOT")
+CreateToggle(CombatPage, "Aimbot", "Tự động ngắm mục tiêu", function(v)
+    -- _G.AimbotEnabled = v
+    print("[FamLV] Aimbot:", v)
+end)
+CreateToggle(CombatPage, "Silent Aim", "Bắn trúng không nhìn thấy", function(v)
+    print("[FamLV] Silent Aim:", v)
+end)
+CreateSlider(CombatPage, "FOV Size", 50, 500, 150, function(v)
+    print("[FamLV] FOV:", v)
+end)
+CreateHeader(CombatPage, "COMBAT")
+CreateToggle(CombatPage, "Infinite Ammo", "Đạn vô hạn", function(v)
+    print("[FamLV] Inf Ammo:", v)
+end)
+CreateToggle(CombatPage, "No Recoil", "Không giật súng", function(v)
+    print("[FamLV] No Recoil:", v)
+end)
+CreateSlider(CombatPage, "Damage Multiplier", 1, 10, 1, function(v)
+    print("[FamLV] Damage x" .. v)
 end)
 
--- ═══════════════════════════════════════════════════════════════════════
--- TAB 2: DI CHUYỂN (3 chức năng)
--- ═══════════════════════════════════════════════════════════════════════
-local P2 = Pages["Di Chuyển"]
-section(P2, "Tốc Độ & Nhảy")
-
--- ===== CHỨC NĂNG 3: SPEED HACK =====
-mkSlider(P2, "🏃  Tốc Độ Chạy", 16, 500, 16, function(v)
-    local char = LP.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
+-- ══════════════════════════════════════
+--       NỘI DUNG MOVEMENT TAB
+-- ══════════════════════════════════════
+CreateHeader(MovePage, "DI CHUYỂN")
+CreateToggle(MovePage, "Speed Hack", "Tăng tốc độ nhân vật", function(v)
+    if LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.WalkSpeed = v and 50 or 16 end
+    end
+end)
+CreateSlider(MovePage, "Walk Speed", 16, 200, 16, function(v)
+    if LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
         if hum then hum.WalkSpeed = v end
     end
 end)
-
--- ===== CHỨC NĂNG 4: JUMP POWER =====
-mkSlider(P2, "⬆  Lực Nhảy", 50, 500, 50, function(v)
-    local char = LP.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.JumpPower = v end
+CreateToggle(MovePage, "Fly Hack", "Bay tự do", function(v)
+    print("[FamLV] Fly:", v)
+end)
+CreateSlider(MovePage, "Fly Speed", 10, 300, 60, function(v)
+    print("[FamLV] Fly Speed:", v)
+end)
+CreateHeader(MovePage, "KHÁC")
+CreateToggle(MovePage, "No Clip", "Xuyên tường", function(v)
+    print("[FamLV] NoClip:", v)
+end)
+CreateToggle(MovePage, "Infinite Jump", "Nhảy vô hạn", function(v)
+    _G.InfJump = v
+    if v then
+        UserInputService.JumpRequest:Connect(function()
+            if _G.InfJump and LocalPlayer.Character then
+                local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+                if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+            end
+        end)
     end
 end)
 
-section(P2, "Khả Năng Đặc Biệt")
+-- ══════════════════════════════════════
+--       NỘI DUNG ESP TAB
+-- ══════════════════════════════════════
+CreateHeader(EspPage, "ESP PLAYER")
+CreateToggle(EspPage, "Player ESP", "Hiện box người chơi", function(v)
+    print("[FamLV] Player ESP:", v)
+end)
+CreateToggle(EspPage, "Name ESP", "Hiện tên người chơi", function(v)
+    print("[FamLV] Name ESP:", v)
+end)
+CreateToggle(EspPage, "Health ESP", "Hiện máu người chơi", function(v)
+    print("[FamLV] Health ESP:", v)
+end)
+CreateToggle(EspPage, "Distance ESP", "Hiện khoảng cách", function(v)
+    print("[FamLV] Distance ESP:", v)
+end)
+CreateHeader(EspPage, "CHIME/CẢNH BÁO")
+CreateToggle(EspPage, "Radar", "Mini radar", function(v)
+    print("[FamLV] Radar:", v)
+end)
 
--- ===== CHỨC NĂNG 5: FLY / BAY =====
-local flyOn = false
-local flyConn
-local flySpeed = 50
-
-mkToggle(P2, "🚀  Fly / Bay Tự Do", false, function(v)
-    flyOn = v
-    local char = LP.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then
-        notify("❌ Không tìm thấy nhân vật!", "❌", C.Red)
-        return
-    end
-    
-    if v then
-        notify("🚀 Fly: BẬT (WASD + Space/Shift)", "🚀", C.Green)
-        
-        local root = char.HumanoidRootPart
-        local bv = Instance.new("BodyVelocity")
-        bv.Velocity = Vector3.new(0, 0, 0)
-        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        bv.Parent = root
-        bv.Name = "FamFlyVelocity"
-        
-        local bg = Instance.new("BodyGyro")
-        bg.P = 9e4
-        bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-        bg.CFrame = root.CFrame
-        bg.Parent = root
-        bg.Name = "FamFlyGyro"
-        
-        flyConn = RunService.RenderStepped:Connect(function()
-            if not flyOn then return end
-            local cam = Workspace.CurrentCamera
-            local dir = Vector3.new(0, 0, 0)
-            
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0, 1, 0) end
-            
-            if dir.Magnitude > 0 then
-                bv.Velocity = dir.Unit * flySpeed
-            else
-                bv.Velocity = Vector3.new(0, 0, 0)
-            end
-            
-            bg.CFrame = cam.CFrame
-        end)
-    else
-        notify("🚀 Fly: TẮT", "🚀", C.Red)
-        if flyConn then flyConn:Disconnect() end
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if root then
-            local bv = root:FindFirstChild("FamFlyVelocity")
-            local bg = root:FindFirstChild("FamFlyGyro")
-            if bv then bv:Destroy() end
-            if bg then bg:Destroy() end
+-- ══════════════════════════════════════
+--       NỘI DUNG MISC TAB
+-- ══════════════════════════════════════
+CreateHeader(MiscPage, "TIỆN ÍCH")
+CreateToggle(MiscPage, "Anti AFK", "Không bị kick AFK", function(v)
+    print("[FamLV] Anti AFK:", v)
+end)
+CreateToggle(MiscPage, "Auto Farm", "Farm tự động", function(v)
+    print("[FamLV] Auto Farm:", v)
+end)
+CreateButton(MiscPage, "Rejoin Server", "Vào lại server hiện tại", function()
+    local id = game.PlaceId
+    game:GetService("TeleportService"):Teleport(id, LocalPlayer)
+end)
+CreateButton(MiscPage, "Xóa Map", "Xóa toàn bộ BasePart trong Workspace", function()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and not v:IsDescendantOf(LocalPlayer.Character) then
+            v:Destroy()
         end
     end
 end)
-
-mkSlider(P2, "🚀  Tốc Độ Bay", 10, 200, 50, function(v)
-    flySpeed = v
-end)
-
--- ═══════════════════════════════════════════════════════════════════════
--- TAB 3: COMBAT (2 chức năng)
--- ═══════════════════════════════════════════════════════════════════════
-local P3 = Pages["Combat"]
-section(P3, "Auto Farm & Combat")
-
--- ===== CHỨC NĂNG 6: AUTO FARM NPC =====
-local autoFarmOn = false
-
-mkToggle(P3, "⚔  Auto Farm NPC Gần Nhất", false, function(v)
-    autoFarmOn = v
+CreateHeader(MiscPage, "CÀI ĐẶT UI")
+CreateToggle(MiscPage, "Rainbow Theme", "Đổi màu cầu vồng", function(v)
     if v then
-        notify("⚔ Auto Farm: BẬT", "⚔", C.Green)
-        
         task.spawn(function()
-            while autoFarmOn do
-                local char = LP.Character
-                if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChildOfClass("Humanoid") then
-                    local root = char.HumanoidRootPart
-                    local nearest, nearDist = nil, math.huge
-                    
-                    for _, obj in pairs(Workspace:GetDescendants()) do
-                        if obj:IsA("Model") and obj ~= char then
-                            local npcHum = obj:FindFirstChildOfClass("Humanoid")
-                            local npcHRP = obj:FindFirstChild("HumanoidRootPart")
-                            
-                            if npcHum and npcHRP and npcHum.Health > 0 then
-                                local isPlayer = false
-                                for _, plr in pairs(Players:GetPlayers()) do
-                                    if plr.Character == obj then isPlayer = true; break end
-                                end
-                                
-                                if not isPlayer then
-                                    local d = (root.Position - npcHRP.Position).Magnitude
-                                    if d < nearDist and d < 300 then
-                                        nearDist = d
-                                        nearest = {hrp = npcHRP, hum = npcHum, model = obj}
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    
-                    if nearest and nearDist < 300 then
-                        root.CFrame = CFrame.new(nearest.hrp.Position + Vector3.new(0, 2, 3))
-                        task.wait(0.1)
-                        
-                        local tool = char:FindFirstChildOfClass("Tool")
-                        if tool then
-                            pcall(function() tool:Activate() end)
-                            
-                            pcall(function()
-                                for _, rem in pairs(tool:GetDescendants()) do
-                                    if rem:IsA("RemoteEvent") then
-                                        rem:FireServer(nearest.hrp.Position, nearest.model)
-                                    elseif rem:IsA("RemoteFunction") then
-                                        pcall(function() rem:InvokeServer(nearest.hrp.Position) end)
-                                    end
-                                end
-                            end)
-                        end
-                        
-                        pcall(function()
-                            VirtualUser:CaptureController()
-                            VirtualUser:Button1Down(Vector2.new(0, 0))
-                        end)
-                    end
-                end
-                task.wait(0.25)
+            local hue = 0
+            while v do
+                hue = (hue + 1) % 360
+                local c = Color3.fromHSV(hue/360, 0.8, 1)
+                TopLine.BackgroundColor3 = c
+                LogoFrame.BackgroundColor3 = c
+                task.wait(0.03)
             end
         end)
-    else
-        notify("⚔ Auto Farm: TẮT", "⚔", C.Red)
     end
 end)
 
--- ===== CHỨC NĂNG 7: AUTO CLICK SIÊU NHANH =====
-local autoClickOn = false
+-- ══════════════════════════════════════
+--       NỘI DUNG INFO TAB
+-- ══════════════════════════════════════
+local InfoFrame = Instance.new("Frame")
+InfoFrame.Size = UDim2.new(1, 0, 0, 100)
+InfoFrame.BackgroundColor3 = CONFIG.BgColor2
+InfoFrame.BorderSizePixel = 0
+InfoFrame.Parent = InfoPage
+CreateCorner(InfoFrame, 8)
+CreateStroke(InfoFrame, CONFIG.AccentColor, 1, 0.6)
 
-mkToggle(P3, "👆  Auto Click Siêu Nhanh", false, function(v)
-    autoClickOn = v
-    if v then
-        notify("👆 Auto Click: BẬT", "👆", C.Green)
-        
-        task.spawn(function()
-            while autoClickOn do
-                local char = LP.Character
-                if char then
-                    local tool = char:FindFirstChildOfClass("Tool")
-                    if tool then
-                        pcall(function() tool:Activate() end)
-                    end
-                    
-                    pcall(function()
-                        VirtualUser:CaptureController()
-                        VirtualUser:Button1Down(Vector2.new(0, 0))
-                        task.wait(0.05)
-                        VirtualUser:Button1Up(Vector2.new(0, 0))
-                    end)
-                end
-                task.wait(0.08)
+local InfoText = Instance.new("TextLabel")
+InfoText.Size = UDim2.new(1, -20, 1, -20)
+InfoText.Position = UDim2.new(0, 10, 0, 10)
+InfoText.BackgroundTransparency = 1
+InfoText.Text = "🎮  FAM LV MENU\n\nVersion: 1.0.0\nMade by: FamLV Code\nDiscord: discord.gg/famlv\n\nGame: " .. game.Name
+InfoText.TextColor3 = CONFIG.TextColor
+InfoText.Font = CONFIG.FontLight
+InfoText.TextSize = 12
+InfoText.TextXAlignment = Enum.TextXAlignment.Left
+InfoText.TextYAlignment = Enum.TextYAlignment.Top
+InfoText.Parent = InfoFrame
+
+-- ══════════════════════════════════════
+--       MỞ TAB MẶC ĐỊNH
+-- ══════════════════════════════════════
+Tabs["⚡ Combat"].Btn.MouseButton1Click:Fire()
+
+-- ══════════════════════════════════════
+--       KÉO MENU (DRAG)
+-- ══════════════════════════════════════
+local dragging, dragInput, dragStart, startPos
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
             end
         end)
-    else
-        notify("👆 Auto Click: TẮT", "👆", C.Red)
+    end
+end)
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
--- ═══════════════════════════════════════════════════════════════════════
--- TAB 4: ESP (2 chức năng)
--- ═══════════════════════════════════════════════════════════════════════
-local P4 = Pages["ESP"]
-section(P4, "ESP Người Chơi")
-
--- ===== CHỨC NĂNG 8: ESP NGƯỜI CHƠI =====
-local espPlayerOn = false
-local espPlayerObjects = {}
-
-mkToggle(P4, "🔲  ESP Người Chơi (Tên + HP + K/cách)", false, function(v)
-    espPlayerOn = v
-    if not v then
-        for _, h in pairs(espPlayerObjects) do
-            if h and h.Parent then h:Destroy() end
-        end
-        espPlayerObjects = {}
-        notify("🔲 ESP Player: TẮT", "🔲", C.Red)
-        return
-    end
-    
-    notify("🔲 ESP Player: BẬT", "🔲", C.Green)
-    
-    task.spawn(function()
-        while espPlayerOn do
-            for _, h in pairs(espPlayerObjects) do
-                if h and h.Parent then h:Destroy() end
-            end
-            espPlayerObjects = {}
-            
-            local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-            
-            for _, plr in pairs(Players:GetPlayers()) do
-                if plr ~= LP and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    local root = plr.Character.HumanoidRootPart
-                    local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-                    
-                    local bb = Instance.new("BillboardGui")
-                    bb.Size = UDim2.new(0, 120, 0, 50)
-                    bb.StudsOffset = Vector3.new(0, 3.5, 0)
-                    bb.Adornee = root
-                    bb.AlwaysOnTop = true
-                    bb.Parent = root
-                    
-                    local bg = Instance.new("Frame")
-                    bg.Size = UDim2.new(1, 0, 1, 0)
-                    bg.BackgroundColor3 = C.Dark
-                    bg.BackgroundTransparency = 0.3
-                    bg.BorderSizePixel = 0
-                    bg.Parent = bb
-                    corner(bg, 6)
-                    
-                    local nameLbl = Instance.new("TextLabel")
-                    nameLbl.Size = UDim2.new(1, 0, 0, 18)
-                    nameLbl.BackgroundTransparency = 1
-                    nameLbl.Text = "👤 " .. plr.Name
-                    nameLbl.Font = Enum.Font.GothamBold
-                    nameLbl.TextSize = 11
-                    nameLbl.TextColor3 = C.Accent
-                    nameLbl.TextStrokeTransparency = 0.5
-                    nameLbl.Parent = bg
-                    
-                    local hpLbl = Instance.new("TextLabel")
-                    hpLbl.Size = UDim2.new(1, 0, 0, 14)
-                    hpLbl.Position = UDim2.new(0, 0, 0, 18)
-                    hpLbl.BackgroundTransparency = 1
-                    hpLbl.Text = hum and ("❤ " .. math.floor(hum.Health) .. "/" .. math.floor(hum.MaxHealth)) or "❤ ???"
-                    hpLbl.Font = Enum.Font.Gotham
-                    hpLbl.TextSize = 10
-                    hpLbl.TextColor3 = C.Green
-                    hpLbl.TextStrokeTransparency = 0.5
-                    hpLbl.Parent = bg
-                    
-                    local distLbl = Instance.new("TextLabel")
-                    distLbl.Size = UDim2.new(1, 0, 0, 14)
-                    distLbl.Position = UDim2.new(0, 0, 0, 32)
-                    distLbl.BackgroundTransparency = 1
-                    local dist = myRoot and math.floor((myRoot.Position - root.Position).Magnitude) or "?"
-                    distLbl.Text = "📏 " .. dist .. " studs"
-                    distLbl.Font = Enum.Font.Gotham
-                    distLbl.TextSize = 9
-                    distLbl.TextColor3 = C.TxtG
-                    distLbl.TextStrokeTransparency = 0.5
-                    distLbl.Parent = bg
-                    
-                    table.insert(espPlayerObjects, bb)
-                end
-            end
-            task.wait(1.5)
-        end
-    end)
-end)
-
-section(P4, "ESP Vật Phẩm")
-
--- ===== CHỨC NĂNG 9: ESP TRÁI ÁC QUỶ =====
-local espFruitOn = false
-local espFruitObjects = {}
-
-mkToggle(P4, "🍎  ESP Trái Ác Quỷ", false, function(v)
-    espFruitOn = v
-    if not v then
-        for _, h in pairs(espFruitObjects) do
-            if h and h.Parent then h:Destroy() end
-        end
-        espFruitObjects = {}
-        notify("🍎 ESP Trái: TẮT", "🍎", C.Red)
-        return
-    end
-    
-    notify("🍎 ESP Trái: BẬT", "🍎", C.Green)
-    
-    task.spawn(function()
-        while espFruitOn do
-            for _, h in pairs(espFruitObjects) do
-                if h and h.Parent then h:Destroy() end
-            end
-            espFruitObjects = {}
-            
-            for _, obj in pairs(Workspace:GetDescendants()) do
-                local name = obj.Name:lower()
-                if (name:find("fruit") or name:find("trai") or name:find("trái") or name:find("devil") or
-                    name:find("bomu") or name:find("mera") or name:find("suna") or name:find("gura") or
-                    name:find("pika") or name:find("magu") or name:find("tori") or name:find("dragon") or
-                    name:find("phoenix") or name:find("quake") or name:find("string") or name:find("dough") or
-                    name:find("venom") or name:find("shadow") or name:find("control") or name:find("spirit") or
-                    name:find("leopard") or name:find("mammoth") or name:find("t-rex") or name:find("kitsune")) then
-                    
-                    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                    if part then
-                        local bb = Instance.new("BillboardGui")
-                        bb.Size = UDim2.new(0, 100, 0, 30)
-                        bb.StudsOffset = Vector3.new(0, 2, 0)
-                        bb.Adornee = part
-                        bb.AlwaysOnTop = true
-                        bb.Parent = part
-                        
-                        local lbl = Instance.new("TextLabel")
-                        lbl.Size = UDim2.new(1, 0, 1, 0)
-                        lbl.BackgroundTransparency = 1
-                        lbl.Text = "🍎 " .. obj.Name
-                        lbl.Font = Enum.Font.GothamBold
-                        lbl.TextSize = 12
-                        lbl.TextColor3 = C.Purple
-                        lbl.TextStrokeTransparency = 0
-                        lbl.Parent = bb
-                        
-                        table.insert(espFruitObjects, bb)
-                    end
-                end
-            end
-            task.wait(3)
-        end
-    end)
-end)
-
--- ═══════════════════════════════════════════════════════════════════════
--- TAB 5: TIỆN ÍCH (1 chức năng)
--- ═══════════════════════════════════════════════════════════════════════
-local P5 = Pages["Tiện Ích"]
-section(P5, "Hỗ Trợ Chơi Game")
-
--- ===== CHỨC NĂNG 10: ANTI AFK =====
-local antiAFK = false
-
-mkToggle(P5, "⏰  Chống AFK Tự Động", false, function(v)
-    antiAFK = v
-    if v then
-        notify("⏰ Anti AFK: BẬT", "⏰", C.Green)
-        
-        LP.Idled:Connect(function()
-            if antiAFK then
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end
-        end)
-    else
-        notify("⏰ Anti AFK: TẮT", "⏰", C.Red)
-    end
-end)
-
-section(P5, "Thông Tin & Khác")
-
-mkButton(P5, "📋  Sao Chép User ID", "Copy UserID của bạn", function()
-    local id = tostring(LP.UserId)
-    pcall(function() setclipboard(id) end)
-    notify("📋 UserID: " .. id .. " (đã copy!)", "📋", C.Blue)
-end)
-
-mkButton(P5, "🔄  Rejoin Server", "Vào lại server hiện tại", function()
-    notify("🔄 Đang rejoin...", "🔄", C.Blue)
-    task.wait(1)
-    TeleportService:Teleport(game.PlaceId, LP)
-end)
-
-mkButton(P5, "☀  Full Bright", "Bật sáng toàn bản đồ", function()
-    Lighting.Brightness = 10
-    Lighting.ClockTime = 14
-    Lighting.FogEnd = 100000
-    Lighting.GlobalShadows = false
-    Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-    notify("☀ Full Bright: BẬT", "☀", C.Green)
-end, C.Blue)
-
--- ═══════════════════════════════════════════════════════════════════════
---      ANIMATION MỞ + TAB MẶC ĐỊNH
--- ═══════════════════════════════════════════════════════════════════════
-MF.Size = UDim2.new(0, 580, 0, 0)
-MF.Position = UDim2.new(0.5, -290, 0.5, 0)
-tw(MF, {Size = UDim2.new(0, 580, 0, 460), Position = UDim2.new(0.5, -290, 0.5, -230)}, 0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-task.wait(0.1)
-SwitchTab("Nhặt Đồ")
-task.wait(0.5)
-notify("🟡 FAM LV MENU v3.0 đã tải! RightShift để ẩn/hiện", "🟡", C.Accent)
-
--- TOGGLE PHÍM
-local menuOpen = true
-UserInputService.InputBegan:Connect(function(inp, gpe)
-    if gpe then return end
-    if inp.KeyCode == Enum.KeyCode.RightShift then
-        menuOpen = not menuOpen
-        if menuOpen then
-            MF.Visible = true
-            tw(MF, {Size = UDim2.new(0, 580, 0, 460), Position = UDim2.new(0.5, -290, 0.5, -230)}, 0.35, Enum.EasingStyle.Back)
+-- ══════════════════════════════════════
+--       PHÍM TẮT - HIDE/SHOW
+-- ══════════════════════════════════════
+local menuVisible = true
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        menuVisible = not menuVisible
+        if menuVisible then
+            MainFrame.Visible = true
+            Tween(MainFrame, { Position = UDim2.new(0.5, -280, 0.5, -210) }, 0.35, Enum.EasingStyle.Back)
         else
-            tw(MF, {Size = UDim2.new(0, 580, 0, 0), Position = UDim2.new(0.5, -290, 0.5, 0)}, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            task.wait(0.27)
-            MF.Visible = false
+            Tween(MainFrame, { Position = UDim2.new(0.5, -280, 1.5, 0) }, 0.3, Enum.EasingStyle.Quart)
+            task.delay(0.35, function()
+                if not menuVisible then MainFrame.Visible = false end
+            end)
         end
-    elseif inp.KeyCode == Enum.KeyCode.Delete then
-        SG:Destroy()
     end
 end)
 
-print("✅ [FAM LV MENU v3.0] 10 Chức Năng VIP đã sẵn sàng! | RightShift để bật/tắt | Delete để đóng")
+-- Nút đóng
+CloseBtn.MouseButton1Click:Connect(function()
+    Tween(MainFrame, { Position = UDim2.new(0.5, -280, 1.5, 0) }, 0.3)
+    task.delay(0.35, function()
+        ScreenGui:Destroy()
+    end)
+end)
+
+-- Nút minimize
+local minimized = false
+MinBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        Tween(MainFrame, { Size = UDim2.new(0, 560, 0, 52) }, 0.3, Enum.EasingStyle.Quart)
+    else
+        Tween(MainFrame, { Size = UDim2.new(0, 560, 0, 420) }, 0.3, Enum.EasingStyle.Back)
+    end
+end)
+
+-- ══════════════════════════════════════
+--       ANIMATION MỞ CỬA
+-- ══════════════════════════════════════
+MainFrame.Position = UDim2.new(0.5, -280, -0.5, 0)
+Tween(MainFrame, { Position = UDim2.new(0.5, -280, 0.5, -210) }, 0.6, Enum.EasingStyle.Back)
+
+print("[FamLV] Menu loaded! Nhấn RightShift để ẩn/hiện")
