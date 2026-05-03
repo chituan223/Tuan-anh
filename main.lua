@@ -1274,12 +1274,3 @@ UserInputService.InputBegan:Connect(function(inp, gpe)
 end)
 
 print("✅ [FAM LV MENU v3.0] 10 Chức Năng VIP đã sẵn sàng! | RightShift để bật/tắt | Delete để đóng")
-'''
-
-# Lưu vào file
-with open('/mnt/agents/output/FamLV_Menu_v3_10ChucNang.lua', 'w', encoding='utf-8') as f:
-    f.write(script_code)
-
-print("✅ Đã lưu script thành công!")
-print(f"📁 File: FamLV_Menu_v3_10ChucNang.lua")
-print(f"📊 Kích thước: {len(script_code)} ký tự")
