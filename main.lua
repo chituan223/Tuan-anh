@@ -1,6 +1,4 @@
-
-# Lưu script vào file để bạn tải về
-script_code = r'''-- ╔══════════════════════════════════════════════════════════════════════╗
+╔══════════════════════════════════════════════════════════════════════╗
 -- ║           FAM LV MENU - TIẾNG VIỆT EDITION v3.0                     ║
 -- ║              10 CHỨC NĂNG VIP | HACK THẬT 100%                      ║
 -- ║        Nhấn [RightShift] để ẩn / hiện | [Delete] để đóng           ║
